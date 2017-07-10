@@ -3,13 +3,14 @@
 #
 
 # Pull base image
-FROM zhicwu/java:8
+FROM usbrandon/java:8
 
 # Set maintainer
-MAINTAINER Zhichun Wu <zhicwu@gmail.com>
+MAINTAINER Brandon Jackson <usbrandon@gmail.com>
+# Forked from Zhichun Wu <zhicwu@gmail.com>
 
 # Set environment variables
-ENV BISERVER_VERSION=7.1 BISERVER_BUILD=7.1.0.0-12 PDI_PATCH=7.1.0.0 \
+ENV BISERVER_VERSION=7.1 BISERVER_BUILD=7.1.0.2-40 PDI_PATCH=7.1.0.0 \
 	BISERVER_HOME=/biserver-ce BISERVER_USER=pentaho \
 	KETTLE_HOME=/biserver-ce/pentaho-solutions/system/kettle \
 	POSTGRESQL_DRIVER_VERSION=9.4.1212 \
@@ -20,10 +21,10 @@ ENV BISERVER_VERSION=7.1 BISERVER_BUILD=7.1.0.0-12 PDI_PATCH=7.1.0.0 \
 LABEL java_server="Pentaho BA Server $BISERVER_VERSION Community Edition"
 
 # Install vanilla Pentaho server along with minor changes to configuration
-RUN echo "Download and unpack Pentaho server..." \
-	&& wget --progress=dot:giga http://downloads.sourceforge.net/project/pentaho/Business%20Intelligence%20Server/${BISERVER_VERSION}/pentaho-server-ce-${BISERVER_BUILD}.zip \
-	&& unzip -q *.zip \
-	&& rm -f *.zip \
+ADD software/pentaho-server-ce-7.1.0.2-40.zip software/
+RUN echo "Unpack Pentaho server..." \
+	&& unzip -q software/*.zip -d / \
+	&& rm -f software \
 	&& mv /pentaho-server $BISERVER_HOME \
 	&& ln -s $BISERVER_HOME /pentaho-server \
 	&& find $BISERVER_HOME -name "*.bat" -delete \
