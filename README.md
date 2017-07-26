@@ -28,7 +28,7 @@ ubuntu:16.04
 ## Get started
 - Run vanilla Pentaho server
 ```
-$ docker run --name bi -p 8080:8080 -d zhicwu/biserver-ce:7.0 biserver
+$ docker run --name bi -p 8080:8080 -d zhicwu/biserver-ce:7.1 biserver
 $ docker logs -f bi
 ```
 - Run patched Pentaho server
@@ -38,7 +38,7 @@ $ docker logs -f bi
 ```
 - Use docker-compose (Recommended)
 ```
-$ git clone https://github.com/zhicwu/docker-biserver-ce.git -b 7.0 --single-branch
+$ git clone https://github.com/zhicwu/docker-biserver-ce.git -b 7.1 --single-branch
 $ cd docker-biserver-ce
 ... edit .env and/or docker-compose.yml based on your needs, put your Pentaho configuration files under ext directory if necessary ...
 $ docker-compose up -d
@@ -62,3 +62,16 @@ $ git clone https://github.com/zhicwu/docker-biserver-ce.git -b 7.1 --single-bra
 $ cd docker-biserver-ce
 $ docker build -t my/biserver:7.1 .
 ```
+
+## Docker Swarm
+
+This containerized build has been adapted for using Docker Swarm. Specifically we wanted to use the secrets and configs features.
+Docker Secrets will allow us to securely present user names and passwords into the stack without the risk of them floating around in environmental variables or being committed to a docker image. Docker configs will let us expose configuration files into the containers for easier customization.
+
+Configurable secrets include user names and passwords for the following services
+  - Jackrabbit
+      Jackrabbit contains the solution repository, examples, security data, and content data from reports that you use Pentaho software to create.
+  - Quartz
+      Quartz holds data that is related to scheduling reports and jobs.
+  - Hibernate
+      Hibernate  holds data that is related to audit logging.

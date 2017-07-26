@@ -60,11 +60,11 @@ update_db() {
 	: ${DATABASE_PORT:="3306"}
 	: ${DATABASE_USER:="$BISERVER_USER"}
 	: ${DATABASE_PASSWD:="$BISERVER_USER"}
-	: ${DATABASE_HIBERNATE:="pbi_hibernate"}
+	: ${DATABASE_HIBERNATE:="hibernate"}
 	: ${DATABASE_HIBERNATE_URL:="jdbc:mysql://$DATABASE_HOST:DATABASE_PORT/$DATABASE_HIBERNATE"}
-	: ${DATABASE_QUARTZ:="pbi_quartz"}
+	: ${DATABASE_QUARTZ:="quartz"}
 	: ${DATABASE_QUARTZ_URL:="jdbc:mysql://$DATABASE_HOST:DATABASE_PORT/$DATABASE_QUARTZ"}
-	: ${DATABASE_REPOSITORY:="pbi_jackrabbit"}
+	: ${DATABASE_REPOSITORY:="jackrabbit"}
 	: ${DATABASE_REPOSITORY_URL:="jdbc:mysql://$DATABASE_HOST:DATABASE_PORT/$DATABASE_REPOSITORY"}
 	: ${DATABASE_VALIDATION_QUERY:="SELECT 1"}
 	: ${DATABASE_TYPE:="mysql"}
@@ -72,37 +72,37 @@ update_db() {
 	/bin/cp -f $BISERVER_HOME/pentaho-solutions/system/jackrabbit/repository.xml.template $BISERVER_HOME/pentaho-solutions/system/jackrabbit/repository.xml \
 		&& sed -i -e 's|\(jdbc.driver=\).*|\1'"$DATABASE_DRIVER"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
 		&& sed -i -e 's|\(jdbc.url=\).*|\1'"$DATABASE_HIBERNATE_URL"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
-		&& sed -i -e 's|\(jdbc.username=\).*|\1'"$DATABASE_USER"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
-		&& sed -i -e 's|\(jdbc.password=\).*|\1'"$DATABASE_PASSWD"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
+		&& sed -i -e 's|\(jdbc.username=\).*|\1'"hib_user"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
+		&& sed -i -e 's|\(jdbc.password=\).*|\1'"FreezingColdWinters"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
 		&& sed -i -e 's|\(hibernate.dialect=\).*|\1'"$DATABASE_DIALECT"'|' pentaho-solutions/system/applicationContext-spring-security-hibernate.properties \
 		&& sed -i -e 's|\(datasource.driver.classname=\).*|\1'"$DATABASE_DRIVER"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
 		&& sed -i -e 's|\(datasource.url=\).*|\1'"$DATABASE_HIBERNATE_URL"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
-		&& sed -i -e 's|\(datasource.username=\).*|\1'"$DATABASE_USER"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
-		&& sed -i -e 's|\(datasource.password=\).*|\1'"$DATABASE_PASSWD"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
+		&& sed -i -e 's|\(datasource.username=\).*|\1'"hib_user"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
+		&& sed -i -e 's|\(datasource.password=\).*|\1'"FreezingColdWinters"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
 		&& sed -i -e 's|\(datasource.validation.query=\).*|\1'"$DATABASE_VALIDATION_QUERY"'|' pentaho-solutions/system/applicationContext-spring-security-jdbc.properties \
 		&& sed -i -e 's|\(<config-file>\).*\(</config-file>\)|\1system/hibernate/'"$STORAGE_TYPE"'.hibernate.cfg.xml\2|' pentaho-solutions/system/hibernate/hibernate-settings.xml \
 		&& sed -i -e 's|\(<property name="connection.driver_class">\).*\(</property>\)|\1'"$DATABASE_DRIVER"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
 		&& sed -i -e 's|\(<property name="connection.url">\).*\(</property>\)|\1'"$DATABASE_HIBERNATE_URL"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
 		&& sed -i -e 's|\(<property name="dialect">\).*\(</property>\)|\1'"$DATABASE_DIALECT"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
-		&& sed -i -e 's|\(<property name="connection.username">\).*\(</property>\)|\1'"$DATABASE_USER"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
-		&& sed -i -e 's|\(<property name="connection.password">\).*\(</property>\)|\1'"$DATABASE_PASSWD"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
+		&& sed -i -e 's|\(<property name="connection.username">\).*\(</property>\)|\1'"hib_user"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
+		&& sed -i -e 's|\(<property name="connection.password">\).*\(</property>\)|\1'"FreezingColdWinters"'\2|' pentaho-solutions/system/hibernate/${STORAGE_TYPE}.hibernate.cfg.xml \
 		&& sed -i -e 's|\(org.quartz.jobStore.driverDelegateClass\).*|\1 = org.quartz.impl.jdbcjobstore.StdJDBCDelegate|' pentaho-solutions/system/quartz/quartz.properties \
 		&& sed -i -e 's|@@DRIVER@@|'"$DATABASE_DRIVER"'|' pentaho-solutions/system/jackrabbit/repository.xml \
 		&& sed -i -e 's|@@URL@@|'"$DATABASE_REPOSITORY_URL"'|' pentaho-solutions/system/jackrabbit/repository.xml \
-		&& sed -i -e 's|@@USER@@|'"$DATABASE_USER"'|' pentaho-solutions/system/jackrabbit/repository.xml \
-		&& sed -i -e 's|@@PASSWD@@|'"$DATABASE_PASSWD"'|' pentaho-solutions/system/jackrabbit/repository.xml \
+		&& sed -i -e 's|@@USER@@|'"jcr_user"'|' pentaho-solutions/system/jackrabbit/repository.xml \
+		&& sed -i -e 's|@@PASSWD@@|'"DoNotJackAround"'|' pentaho-solutions/system/jackrabbit/repository.xml \
 		&& sed -i -e 's|@@DB_TYPE@@|'"$DATABASE_TYPE"'|' pentaho-solutions/system/jackrabbit/repository.xml \
 		&& cat <<< "<?xml version='1.0' encoding='UTF-8'?>
 <Context path='/pentaho' docbase='webapps/pentaho/'>
 	<Resource name='jdbc/Hibernate' auth='Container' type='javax.sql.DataSource'
 		factory='org.apache.commons.dbcp.BasicDataSourceFactory' maxActive='20' maxIdle='5'
-		maxWait='10000' username='${DATABASE_USER}' password='${DATABASE_PASSWD}'
+		maxWait='10000' username='hib_user' password='FreezingColdWinters'
 		driverClassName='${DATABASE_DRIVER}' url='${DATABASE_HIBERNATE_URL}'
 		validationQuery='${DATABASE_VALIDATION_QUERY}' />
 		
 	<Resource name='jdbc/Quartz' auth='Container' type='javax.sql.DataSource'
 		factory='org.apache.commons.dbcp.BasicDataSourceFactory' maxActive='20' maxIdle='5'
-		maxWait='10000' username='${DATABASE_USER}' password='${DATABASE_PASSWD}'
+		maxWait='10000' username='pentaho_user' password='TimeIsEverything'
 		driverClassName='${DATABASE_DRIVER}' url='${DATABASE_QUARTZ_URL}'
 		validationQuery='${DATABASE_VALIDATION_QUERY}' />
 </Context>" > tomcat/webapps/pentaho/META-INF/context.xml
@@ -125,13 +125,13 @@ init_biserver() {
 			&& sed -i -e 's|\(locale-language=\).*|\1'"$LOCALE_LANGUAGE"'|' pentaho-solutions/system/server.properties \
 			&& sed -i -e 's|\(locale-country=\).*|\1'"$LOCALE_COUNTRY"'|' pentaho-solutions/system/server.properties \
 			&& sed -i -e 's|\(<value>\)false\(</value>\)|\1true\2|' pentaho-solutions/system/systemListeners.xml \
-			&& sed -i 's/^\(active.hadoop.configuration=\).*/\1'"$PDI_HADOOP_CONFIG"'/' $KETTLE_HOME/plugins/pentaho-big-data-plugin/plugin.properties \
 			&& find $BISERVER_HOME -type d -print0 | xargs -0 chown $BISERVER_USER \
 			&& touch $BISERVER_HOME/.initialized
 			#&& sed -i -e 's|\(,mvn:pentaho-karaf-features/pentaho-big-data-plugin-osgi/6.1.0.1-196/xml/features\)||' pentaho-solutions/system/karaf/etc/org.apache.karaf.features.cfg \
 			#&& sed -i -e 's|\(respectStartLvlDuringFeatureStartup=\).*|\1true|' pentaho-solutions/system/karaf/etc/org.apache.karaf.features.cfg \
 			#&& sed -i -e 's|\(featuresBootAsynchronous=\).*|\1false|' pentaho-solutions/system/karaf/etc/org.apache.karaf.features.cfg \
 			#&& sed -i -e 's|\(,pdi-dataservice,pentaho-marketplace\)||' pentaho-solutions/system/karaf/etc/org.apache.karaf.features.cfg \
+			#&& sed -i 's/^\(active.hadoop.configuration=\).*/\1'"$PDI_HADOOP_CONFIG"'/' $KETTLE_HOME/plugins/pentaho-big-data-plugin/plugin.properties \
 	fi
 }
 
@@ -223,7 +223,6 @@ apply_patches() {
 		
 		echo "Updating configuration..." \
 			&& sed -i -e 's|\(<bean id="IAuditEntry" class="\).*|\1org.pentaho.platform.engine.core.audit.NullAuditEntry" scope="singleton" />|' pentaho-solutions/system/pentahoObjects.spring.xml \
-			&& sed -i -e 's|\(.*<default-theme>\).*\(</default-theme>\)|\1crystal\2|' pentaho-solutions/system/pentaho.xml \
 			&& sed -i -e 's|\(<log-level>\).*\(</log-level>\)|\1INFO\2|' pentaho-solutions/system/pentaho.xml \
 			&& sed -i -e 's|\(<max-act-conn>\).*\(</max-act-conn>\)|\150\2|' pentaho-solutions/system/pentaho.xml \
 			&& sed -i -e 's|\(<sampledata-datasource>\).*|<!-- \1|' pentaho-solutions/system/pentaho.xml \

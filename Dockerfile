@@ -6,35 +6,50 @@
 FROM usbrandon/java:8
 
 # Set maintainer
+
 MAINTAINER Brandon Jackson <usbrandon@gmail.com>
 # Forked from Zhichun Wu <zhicwu@gmail.com>
 
 # Set environment variables
-ENV BISERVER_VERSION=7.1 BISERVER_BUILD=7.1.0.2-40 PDI_PATCH=7.1.0.0 \
-	BISERVER_HOME=/biserver-ce BISERVER_USER=pentaho \
-	KETTLE_HOME=/biserver-ce/pentaho-solutions/system/kettle \
+#  - Adapting the build environment similar to CBF2
+
+ENV BISERVER_VERSION=7.1 BISERVER_BUILD=7.1.0.2-40 PDI_PATCH=7.0.0.0.3 \
+	BISERVER_HOME=/pentaho/pentaho-server BISERVER_USER=pentaho \
+        KETTLE_HOME=/home/pentaho \
+#	KETTLE_HOME=/pentaho-server/pentaho-solutions/system/kettle \
+	 CASSANDRA_DRIVER_VERSION=0.6.3 \
+              JTDS_DRIVER_VERSION=1.3.1 \
+             MYSQL_DRIVER_VERSION=5.1.42 \  
 	POSTGRESQL_DRIVER_VERSION=9.4.1212 \
-	MYSQL_DRIVER_VERSION=5.1.42 JTDS_VERSION=1.3.1 CASSANDRA_DRIVER_VERSION=0.6.3 \
-	H2DB_VERSION=1.4.195 HSQLDB_VERSION=2.4.0 XMLA_PROVIDER_VERSION=1.0.0.103
+           VERTICA_DRIVER_VERSION=7.1.2-0 \
+	H2DB_VERSION=1.4.195 HSQLDB_VERSION=2.4.0 XMLA_PROVIDER_VERSION=1.0.0.103 
 
 # Set label
-LABEL java_server="Pentaho BA Server $BISERVER_VERSION Community Edition"
+
+LABEL java_server="Pentaho BA Server ${BISERVER_VERSION} Community Edition"
 
 # Install vanilla Pentaho server along with minor changes to configuration
+
 ADD software/pentaho-server-ce-7.1.0.2-40.zip software/
 RUN echo "Unpack Pentaho server..." \
-	&& unzip -q software/*.zip -d / \
-	&& rm -f software \
-	&& mv /pentaho-server $BISERVER_HOME \
-	&& ln -s $BISERVER_HOME /pentaho-server \
+	&& unzip -q software/*.zip -d /pentaho \
+	&& rm -rf software \
+#	&& mv /pentaho-server $BISERVER_HOME \
+#	&& ln -s $BISERVER_HOME /pentaho-server \
 	&& find $BISERVER_HOME -name "*.bat" -delete \
 	&& find $BISERVER_HOME -name "*.exe" -delete \
 	&& mkdir -p $BISERVER_HOME/data/.hsqldb \
 	&& /bin/cp -rf $BISERVER_HOME/data/hsqldb/* $BISERVER_HOME/data/.hsqldb/. \
+		&& apt-get update \
+	&& echo "Installing xvfb to support Pentaho Reporting Engine running in systems without X11" \
+		# https://help.pentaho.com/Documentation/7.1/Installation/Archive/015_Prepare_linux_environment
+		# To generate charts, the Pentaho Reporting engine requires functions found in X11. If you are unwilling or unable to install an X server, you can install the xvfb package instead.
+		# The xvfb package provides the X11 framebuffer emulation, which performs all graphical operations in the memory rather than sending them to the screen. 
+		&& apt-get install -y xvfb \
 	&& echo "Install APR for Tomcat..." \
 		&& tar zxf $BISERVER_HOME/tomcat/bin/tomcat-native.tar.gz \
 		&& cd tomcat-native*/native \
-		&& apt-get update \
+		# Dependencies to build the APR for Tomcat.
 		&& apt-get install -y libapr1-dev gcc make \
 		&& ./configure --with-apr=/usr/bin/apr-config --disable-openssl --with-java-home=$JAVA_HOME --prefix=$BISERVER_HOME/tomcat \
 		&& make \
@@ -51,26 +66,55 @@ RUN echo "Unpack Pentaho server..." \
 		&& sed -i -e 's/\(exec ".*"\) start/\1 run/' tomcat/bin/startup.sh \
 		&& rm -f promptuser.* pentaho-solutions/system/default-content/* \
 		&& sed -i -e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">\n        <extension>xlsx</extension>\n      </MimeTypeDefinition>\n\1|' \
-			-e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.template">\n        <extension>xltx</extension>\n      </MimeTypeDefinition>\n\1|' \
-			-e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.sheet.macroEnabled.12">\n        <extension>xlsm</extension>\n      </MimeTypeDefinition>\n\1|' \
-			-e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.template.macroEnabled.12">\n        <extension>xltm</extension>\n      </MimeTypeDefinition>\n\1|' \
-			-e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.addin.macroEnabled.12">\n        <extension>xlam</extension>\n      </MimeTypeDefinition>\n\1|' \
-			-e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.sheet.binary.macroEnabled.12">\n        <extension>xlsb</extension>\n      </MimeTypeDefinition>\n\1|' \
-			-e 's|\(        <extension>xls</extension>\)|\1\n        <extension>xlt</extension>\n        <extension>xla</extension>|' \
-			-e 's|\(        <extension>sql</extension>\)|\1\n        <extension>txt</extension>\n        <extension>csv</extension>|' pentaho-solutions/system/ImportHandlerMimeTypeDefinitions.xml \
+  		          -e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.template">\n        <extension>xltx</extension>\n      </MimeTypeDefinition>\n\1|' \
+			  -e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.sheet.macroEnabled.12">\n        <extension>xlsm</extension>\n      </MimeTypeDefinition>\n\1|' \
+			  -e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.template.macroEnabled.12">\n        <extension>xltm</extension>\n      </MimeTypeDefinition>\n\1|' \
+			  -e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.addin.macroEnabled.12">\n        <extension>xlam</extension>\n      </MimeTypeDefinition>\n\1|' \
+			  -e 's|\(      <MimeTypeDefinition mimeType="application/vnd.ms-excel">\)|      <MimeTypeDefinition mimeType="application/vnd.ms-excel.sheet.binary.macroEnabled.12">\n        <extension>xlsb</extension>\n      </MimeTypeDefinition>\n\1|' \
+			  -e 's|\(        <extension>xls</extension>\)|\1\n        <extension>xlt</extension>\n        <extension>xla</extension>|' \
+			  -e 's|\(        <extension>sql</extension>\)|\1\n        <extension>txt</extension>\n        <extension>csv</extension>|' pentaho-solutions/system/ImportHandlerMimeTypeDefinitions.xml \
 		&& sed -i -e 's|\(,csv,\)|\1sql,|' pentaho-solutions/system/*.xml \
 		&& sed -i -e 's|\(,xlsx,\)|\1xltx,xlsm,xltm,xlam,xlsb,|' pentaho-solutions/system/*.xml \
 	&& echo "Add Pentaho user..." \
-		&& useradd -md $BISERVER_HOME -s /bin/bash $BISERVER_USER
+		&& useradd -s /bin/bash $BISERVER_USER \
+		&& chown -R $BISERVER_USER.$BISERVER_USER /home/$BISERVER_USER
+#		&& useradd -md $BISERVER_HOME -s /bin/bash $BISERVER_USER
+
+# Configure EXT Startup and DynamicFilter
+
+ADD ./biserver-modifications/applicationContext-EXT-DynamicDataFiltering.xml /pentaho/pentaho-server/pentaho-solutions/system/
+ADD ./biserver-modifications/applicationContext-EXT-SessionStartUp.xml /pentaho/pentaho-server/pentaho-solutions/system/
+ADD ./biserver-modifications/EXT-DynamicDataFiltering-3.1.1.jar /pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/
+ADD ./biserver-modifications/EXT-DynamicDataFiltering.properties /pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/classes/
+
+ADD ./biserver-modifications/kettle.properties /home/pentaho/.kettle/
+#ADD ./biserver-modifications/kettle.properties /home/pentaho/.kettle/
+RUN chown pentaho:pentaho /home/pentaho/.kettle/kettle.properties \
+    && perl -pi -e 's#</beans>#<import resource="applicationContext-EXT-SessionStartUp.xml" /><import resource="applicationContext-EXT-DynamicDataFiltering.xml" /></beans>#' /pentaho/pentaho-server/pentaho-solutions/system/pentaho-spring-beans.xml \
+#       perl -pi -e 's#requireService ["analyzer/vizApi.conf"] = "pentaho.config.spec.IRuleSet#//requireService ["analyzer/vizApi.conf"] = "pentaho.config.spec.IRuleSet#' /pentaho/pentaho-server/pentaho-solutions/system/analyzer/scripts/analyzer-require-js-cfg.js && \
+    && sed -i -e '$apt.webdetails.cda.cache.extraCacheKeys.tenant_id=${[session:tenant_id]}' /pentaho/pentaho-server/pentaho-solutions/system/cda/cda.properties
+        # && \
+        # perl -pi -e 's#<prop key="admin">password,Administrator,Authenticated</prop>#<prop key="admin">password,Administrator,Authenticated</prop><prop key="Amy">password,Administrator,Authenticated</prop>#<prop key="James">password,Administrator,Authenticated</prop><prop key="Richard">#password,Administrator,Authenticated</prop><prop key="John">password,Administrator,Authenticated</prop>#' /pentaho/pentaho-server/pentaho-solutions/system/applicationContext-spring-security-memory.xml
+
+
+# Place the custom login page
+
+COPY ./biserver-modifications/custom_login/index.jsp /pentaho/pentaho-server/tomcat/webapps/pentaho/
+COPY ./biserver-modifications/custom_login/jsp/PUCLogin.jsp /pentaho/pentaho-server/tomcat/webapps/pentaho/jsp/
+COPY ./biserver-modifications/custom_login/images/logo.png /pentaho/pentaho-server/tomcat/webapps/pentaho-style/images/
+COPY ./biserver-modifications/custom_login/images/hero.mp4 /pentaho/pentaho-server/tomcat/webapps/pentaho-style/images/
+COPY ./biserver-modifications/custom_login/images/video_placeholder.jpg /pentaho/pentaho-server/tomcat/webapps/pentaho-style/images/
 
 # Change work directory
+
 WORKDIR $BISERVER_HOME
 
 # Add latest JDBC drivers and XMLA connector
+
 RUN echo "Download and install JDBC drivers..." \
 	&& wget --progress=dot:giga https://jdbc.postgresql.org/download/postgresql-${POSTGRESQL_DRIVER_VERSION}.jar \
 			http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_DRIVER_VERSION}/mysql-connector-java-${MYSQL_DRIVER_VERSION}.jar \
-			http://central.maven.org/maven2/net/sourceforge/jtds/jtds/${JTDS_VERSION}/jtds-${JTDS_VERSION}.jar \
+			http://central.maven.org/maven2/net/sourceforge/jtds/jtds/${JTDS_DRIVER_VERSION}/jtds-${JTDS_DRIVER_VERSION}.jar \
 			http://central.maven.org/maven2/com/github/zhicwu/cassandra-jdbc-driver/${CASSANDRA_DRIVER_VERSION}/cassandra-jdbc-driver-${CASSANDRA_DRIVER_VERSION}-shaded.jar \
 			http://central.maven.org/maven2/com/h2database/h2/${H2DB_VERSION}/h2-${H2DB_VERSION}.jar \
 			http://central.maven.org/maven2/org/hsqldb/hsqldb/${HSQLDB_VERSION}/hsqldb-${HSQLDB_VERSION}.jar \
@@ -79,13 +123,18 @@ RUN echo "Download and install JDBC drivers..." \
 	&& rm -f tomcat/lib/postgre*.jar tomcat/lib/mysql*.jar tomcat/lib/jtds*.jar tomcat/lib/h2*.jar tomcat/lib/hsqldb*.jar \
 	&& mv *.jar $BISERVER_HOME/tomcat/lib/.
 
+# Add any custom JDBC drivers from the local jdbc-drivers folder
+
+COPY ./jdbc-drivers/* $BISERVER_HOME/tomcat/lib/.
+
 # Install plugins
+
 RUN echo "Download plugins..." \
 	&& wget -P $BISERVER_HOME/tomcat/webapps/pentaho/WEB-INF/lib https://github.com/zhicwu/saiku/releases/download/3.8.8-SNAPSHOT/saiku-olap-util-3.8.8.jar \
 	&& wget -O btable.zip https://sourceforge.net/projects/btable/files/Version3.0-3.6/BTable-pentaho7-3.6-STABLE.zip/download \
 	&& wget -O saiku-chart-plus.zip http://sourceforge.net/projects/saikuchartplus/files/SaikuChartPlus3/saiku-chart-plus-vSaiku3-plugin-pentaho.zip/download \
 	&& wget --progress=dot:giga https://github.com/zhicwu/saiku/releases/download/3.8.8-SNAPSHOT/saiku-plugin-p6-3.8.8.zip \
-			https://github.com/zhicwu/cte/releases/download/7.0-SNAPSHOT/cte-7.0-snapshot.zip \
+			http://ci.pentaho.com/job/webdetails-cte/lastSuccessfulBuild/artifact/dist/cte-8.0-SNAPSHOT.zip \
 			http://ctools.pentaho.com/files/d3ComponentLibrary/14.06.18/d3ComponentLibrary-14.06.18.zip \
 			https://github.com/rpbouman/pash/raw/master/bin/pash.zip \
 	&& echo "Installing plugins..." \
@@ -106,17 +155,31 @@ RUN echo "Download plugins..." \
 		&& sed -i -e 's|self.template()|"Error!"|' \
 			-e 's|http://meteorite.bi/|/|' pentaho-solutions/system/saiku/ui/saiku.min.js
 
+# Enable CDA and CDE
+
+RUN sed -i.bak 's/<!--//g;s/-->//g' $BISERVER_HOME/pentaho-solutions/system/pentaho-cdf-dd/plugin.xml && \
+    sed -i.bak 's/<!--//g;s/-->//g' $BISERVER_HOME/pentaho-solutions/system/cda/plugin.xml
+
+# Add the solutions
+# - Anything in the zip file get's extracted in the servers internal repository on first run.
+#   There is an exportManifest.xml file that can describe things like database connections and mondrian schema with settings.
+
+COPY ./solutions/solution.zip /pentaho
+RUN mv /pentaho/solution.zip $BISERVER_HOME/pentaho-solutions/system/default-content/
+
 # Download patches and dependencies
-RUN echo "Download patches and dependencies..." \
-	&& wget --progress=dot:giga https://github.com/zhicwu/pdi-cluster/releases/download/${PDI_PATCH}/pentaho-kettle-${PDI_PATCH}.jar \
-			https://github.com/zhicwu/pdi-cluster/releases/download/${PDI_PATCH}/pentaho-platform-${PDI_PATCH}.jar
+#RUN echo "Download patches and dependencies..." \
+#	&& wget --progress=dot:giga https://github.com/zhicwu/pdi-cluster/releases/download/${PDI_PATCH}/pentaho-kettle-${PDI_PATCH}.jar \
+#			https://github.com/zhicwu/pdi-cluster/releases/download/${PDI_PATCH}/pentaho-platform-${PDI_PATCH}.jar
 
 # Add entry point, tempaltes and cron jobs
+
 COPY docker-entrypoint.sh $BISERVER_HOME/docker-entrypoint.sh
 COPY repository.xml.template $BISERVER_HOME/pentaho-solutions/system/jackrabbit/repository.xml.template
 COPY purge-old-files.sh /etc/cron.hourly/purge-old-files
 
 # Post configuration
+
 RUN echo "Post configuration..." \
 	&& chmod 0700 /etc/cron.hourly/* \
 	&& chmod +x $BISERVER_HOME/*.sh \
